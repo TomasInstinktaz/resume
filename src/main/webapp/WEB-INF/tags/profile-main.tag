@@ -1,9 +1,9 @@
 <%@ tag pageEncoding="UTF-8" trimDirectiveWhitespaces="true"%>
 
 <div class="panel panel-primary">
-	<a href="/edit"><img class="img-responsive photo" src="/media/avatar/861c741b-3a29-43e6-8c3b-97fb577cad35.jpg" alt="photo"></a>
+	<a href="/edit"><img class="img-responsive photo" src="/media/avatar/1ff95d4b-fcec-4dc4-89ad-8ac3d8671f66.jpg" alt="photo"></a>
 	<h1 class="text-center">
-		<a style="color: black;" href="/edit">Richard Hendricks</a>
+		<a style="color: black;" href="/edit">${fullName}</a>
 	</h1>
 	<h6 class="text-center">
 		<strong>Odessa, Ukraine</strong>
