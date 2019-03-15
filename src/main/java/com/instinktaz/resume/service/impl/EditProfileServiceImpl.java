@@ -1,5 +1,6 @@
 package com.instinktaz.resume.service.impl;
 
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.collections.CollectionUtils;
@@ -10,22 +11,29 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronizationAdapter;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import com.instinktaz.resume.entity.Profile;
 import com.instinktaz.resume.entity.Skill;
 import com.instinktaz.resume.entity.SkillCategory;
 import com.instinktaz.resume.exception.CantCompleteClientRequestException;
 import com.instinktaz.resume.form.SignUpForm;
+import com.instinktaz.resume.repository.search.ProfileSearchRepository;
 import com.instinktaz.resume.repository.storage.ProfileRepository;
 import com.instinktaz.resume.repository.storage.SkillCategoryRepository;
 import com.instinktaz.resume.service.EditProfileService;
 import com.instinktaz.resume.util.DataUtil;
 
 @Service
+@SuppressWarnings("unchecked")
 public class EditProfileServiceImpl implements EditProfileService {
 	private static final Logger LOGGER = LoggerFactory.getLogger(EditProfileServiceImpl.class);
 	@Autowired
 	private ProfileRepository profileRepository;
+	
+	@Autowired
+	private ProfileSearchRepository profileSearchRepository;
 	
 	@Autowired
 	private SkillCategoryRepository skillCategoryRepository;
@@ -49,6 +57,7 @@ public class EditProfileServiceImpl implements EditProfileService {
 		profile.setPassword(signUpForm.getPassword());
 		profile.setCompleted(false);
 		profileRepository.save(profile);
+		registerCreateIndexProfileIfTrancationSuccess(profile);
 		return profile;
 	}
 
@@ -62,6 +71,22 @@ public class EditProfileServiceImpl implements EditProfileService {
 			}
 		}
 		return uid;
+	}
+	
+	private void registerCreateIndexProfileIfTrancationSuccess(final Profile profile) {
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+			@Override
+			public void afterCommit() {
+				LOGGER.info("New profile created: {}", profile.getUid());
+				profile.setCertificates(Collections.EMPTY_LIST);
+				profile.setPractics(Collections.EMPTY_LIST);
+				profile.setLanguages(Collections.EMPTY_LIST);
+				profile.setSkills(Collections.EMPTY_LIST);
+				profile.setCourses(Collections.EMPTY_LIST);
+				profileSearchRepository.save(profile);
+				LOGGER.info("New profile index created: {}", profile.getUid());
+			}
+		});
 	}
 
 	@Override
@@ -84,6 +109,24 @@ public class EditProfileServiceImpl implements EditProfileService {
 		} else {
 			profile.setSkills(updatedData);
 			profileRepository.save(profile);
+			registerUpdateIndexProfileSkillsIfTransactionSuccess(idProfile, updatedData);
 		}
+	}
+	
+	private void registerUpdateIndexProfileSkillsIfTransactionSuccess(final long idProfile, final List<Skill> updatedData) {
+		TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+			@Override
+			public void afterCommit() {
+				LOGGER.info("Profile skills updated");
+				updateIndexProfileSkills(idProfile, updatedData);
+			}
+		});
+	}
+
+	private void updateIndexProfileSkills(long idProfile, List<Skill> updatedData) {
+		Profile profile = profileSearchRepository.findOne(idProfile);
+		profile.setSkills(updatedData);
+		profileSearchRepository.save(profile);
+		LOGGER.info("Profile skills index updated");
 	}
 }

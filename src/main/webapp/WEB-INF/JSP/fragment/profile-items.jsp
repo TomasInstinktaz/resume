@@ -8,7 +8,7 @@
 				<a href="/${profile.uid }"><img alt="${profile.fullName }" src="${profile.smallPhoto }" class="photo"></a>
 			</div>
 			<div class="media-body search-result-item">
-				<a href="/${profile.uid }" class="btn btn-primary pull-right">Детали</a>
+				<a href="/${profile.uid }" class="btn btn-primary pull-right">Datales</a>
 				<h4 class="media-heading">
 					<a href="/${profile.uid }">${profile.id}) ${profile.fullName }, ${profile.age }</a>
 				</h4>
